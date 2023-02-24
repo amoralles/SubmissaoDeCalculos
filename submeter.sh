@@ -1,7 +1,7 @@
 clear
 rm faltam >&/dev/null
 rm rodando >&/dev/null
-rm status >&/dev/null
+rm ./status >&/dev/null
 rm terminados >&/dev/null
 
 #lista dos que estão na fila
@@ -46,9 +46,11 @@ diff_list=()
 
 faltam=()
 
-while [[ ${#list2[@]} -le ${#list1[@]} || ${#diff_list[@]} -gt 0 ]]
+while [[ ${#list2[@]} -le ${#list1[@]} ]]
 do
 diff_list=() # redefine a lista de diferença como vazia
+
+faltam=()
 
 for item in "${list1[@]}"
 do
@@ -57,6 +59,8 @@ then
 diff_list+=("$item")
 fi
 done
+
+> faltam 
 
 for item in "${diff_list[@]}"
 do
@@ -68,10 +72,11 @@ rodando=( $(cat ./rodando) )
 
 for item in "${faltam[@]}"
 do
-if ! echo "${rodando[@]}" | grep -wq "$item"
-then
-qsub GSS_"$item".pbs
-fi
+  if ! echo "${rodando[@]}" | grep -wq "$item"
+  then
+    qsub GSS_"$item".pbs
+    sed -i "/$item/d" ./faltam
+  fi
 done
 
 #atualiza lista 2 deitens terminados
@@ -86,7 +91,6 @@ qstat -au acmoralles > s
 sed '1,5d' s > status
 rm s
 awk -F" " '{print $4 }' status > rodando
-rodando=( $(cat ./rodando) ) # lê a lista de itens rodando atualmente
 
 #atualiza a lista dos que faltam
 faltam=()
